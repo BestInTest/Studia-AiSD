@@ -1,30 +1,72 @@
 #include <iostream>
 #include <string>
+#include <sstream>
 
 using std::string;
 
-char* match(string s) {
-    //for () {
-
-    //}
-}
+string normalize(string s);
+string match(const string& s);
+bool isVowel(char c);
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cout.tie(nullptr);
+    std::cin.tie(nullptr);
+
     int n;
     //char slowo[200] = {};
-    string slowo;
+    string linia;
     std::cin >> n;
+    std::cin.ignore();
 
 
     for (int i = 0; i < n; i++) {
-        std::getline(std::cin, slowo); // sprawdzic czy string alokuje do 200 znakow
-        std::cout << slowo << "\n";
+        std::getline(std::cin, linia);
+        linia = normalize(linia);
+        //std::cout << slowo << "\n";
+
+        std::stringstream ss(linia);
+        string word;
+
+        while (ss >> word) {
+
+        }
     }
 
     return 0;
 
 
 
+}
+
+string normalize(string s) {
+    string result;
+    for (char c : s) {
+        if (isalpha(c)) {
+            result += tolower(c);
+        }
+    }
+    return result;
+}
+
+string match(const string &s) {
+    if (s == "ua") return "malpa";
+    if (s == "rar") return "lew";
+    if (s == "io") return "osiol";
+    if (s == "mu") return "bizon";
+    if (s == "iha") return "kon";
+    if (s == "tru") return "slon";
+    if (s == "grr") return "tygrys";
+    if (s == "pi") return "pingwin";
+    if (s == "hu") return "sowa";
+    if (s == "be") return "owca";
+    if (s == "kwa") return "kaczka";
+    return "nie wiem";
+}
+
+bool isVowel(char c) {
+    //c = tolower(c);
+    return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'y';
 }
 
 

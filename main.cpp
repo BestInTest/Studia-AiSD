@@ -1,12 +1,13 @@
 #include <iostream>
 #include <string>
-#include <sstream>
 
 using std::string;
 
-string normalize(string s);
+//string normalize(string s);
 string match(const string& s);
 bool isVowel(char c);
+string processSound(const string& s);
+void splitWords(const string& line, string words[], int& wordCount);
 
 int main() {
     std::ios_base::sync_with_stdio(false);
@@ -14,31 +15,108 @@ int main() {
     std::cin.tie(nullptr);
 
     int n;
-    //char slowo[200] = {};
     string linia;
     std::cin >> n;
     std::cin.ignore();
 
-
     for (int i = 0; i < n; i++) {
         std::getline(std::cin, linia);
-        linia = normalize(linia);
-        //std::cout << slowo << "\n";
 
-        std::stringstream ss(linia);
-        string word;
+        string words[201];
+        int wordCount = 0;
+        splitWords(linia, words, wordCount);
 
-        while (ss >> word) {
+        // Dla przypadku kiedy jest pusta linijka
+        if (wordCount == 0) {
+            std::cout << "nie wiem\n";
+            continue;
+        }
 
+        string firstAnimal = "nie wiem";
+        bool consistent = true; // do oznaczania czy wszystkie slowa pasuja do tego samego zwierzaka
+
+        // przetwarzanie dźwięku
+        string processedSound = processSound(words[0]);
+        if (processedSound.empty()) {
+            consistent = false;
+        } else {
+            firstAnimal = match(processedSound);
+        }
+
+        if (firstAnimal == "nie wiem") {
+            consistent = false;
+        }
+
+        // sprawdzanie pozostalych slow
+        for (int j = 1; j < wordCount; j++) {
+            string currentProcessed = processSound(words[j]);
+            //std::cout << "currentProcessed: " << currentProcessed << "\n";
+            if (currentProcessed.empty() || match(currentProcessed) != firstAnimal) {
+                consistent = false;
+                break;
+            }
+        }
+
+        if (consistent) {
+            std::cout << firstAnimal << "\n";
+        } else {
+            std::cout << "nie wiem\n";
         }
     }
 
     return 0;
-
-
-
 }
 
+string processSound(const string& s) {
+    // normalizacja
+    string normalized;
+    for (char c : s) {
+        if (isalpha(c)) {
+            normalized += tolower(c);
+        }
+    }
+
+    if (normalized.empty()) {
+        return "";
+    }
+
+    // usuwanie powtarzajacych sie samogłosek
+    string result;
+    result += normalized[0];
+    for (int i = 1; i < (int) normalized.length(); ++i) {
+        //std::cout << "normalized[i]: " << normalized[i] << " normalized[i-1]: " << normalized[i-1] << "\n";
+
+        // Jeśli aktualny znak jest samogłoską i jest taki sam jak poprzedni to go pomijamy
+        if (isVowel(normalized[i]) && normalized[i] == normalized[i-1]) {
+            continue;
+        }
+        result += normalized[i];
+    }
+    //std::cout << result << "\n";
+    return result;
+}
+
+void splitWords(const string& line, string words[], int& wordCount) {
+    wordCount = 0;
+    string currentWord;
+    for (char c : line) {
+        if (isspace(c)) { // Koniec słowa
+            //std::cout << currentWord << "\n";
+            if (!currentWord.empty()) {
+                words[wordCount++] = currentWord; // Dodanie stworzonego słowa do tablicy
+                currentWord = "";
+            }
+        } else {
+            // Tworzenie słowa
+            currentWord += c;
+        }
+    }
+    if (!currentWord.empty()) {
+        words[wordCount++] = currentWord;
+    }
+}
+
+/*
 string normalize(string s) {
     string result;
     for (char c : s) {
@@ -47,7 +125,7 @@ string normalize(string s) {
         }
     }
     return result;
-}
+}*/
 
 string match(const string &s) {
     if (s == "ua") return "malpa";

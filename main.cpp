@@ -50,8 +50,10 @@ int main() {
         // sprawdzanie pozostalych slow
         for (int j = 1; j < wordCount; j++) {
             string currentProcessed = processSound(words[j]);
-            //std::cout << "currentProcessed: " << currentProcessed << "\n";
-            if (currentProcessed.empty() || match(currentProcessed) != firstAnimal) {
+            if (currentProcessed.empty()) {
+                continue;
+            }
+            if (match(currentProcessed) != firstAnimal) {
                 consistent = false;
                 break;
             }

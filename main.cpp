@@ -4,9 +4,9 @@
 using std::string;
 
 struct Animal {
-    string type; // gatunek
+    //string type; // gatunek
     int weight = 0; // tutaj też można spróbować zmienić z int na short
-    string name; // todo: zmienić na char[11] jeśli będzie zabierać za dużo pamięci
+    char name[11] = {}; // maksymalnie 10 znaków + null terminator
 };
 
 Animal zoo[8][10001];
@@ -64,7 +64,7 @@ int main() {
             mal(arr, currentSize);
         } else {
             Animal animal = resolveAnimal(linia);
-            index = getIndexFor(animal.type); //nadpisanie zmiennej dlatego że przy dodawaniu zwierząt kolejność argumentów jest inna
+            index = getIndexFor(action); //nadpisanie zmiennej dlatego że przy dodawaniu zwierząt kolejność argumentów jest inna
             addAndSort(animal, zoo[index], sizes[index]); // tutaj jest problem
         }
 
@@ -129,6 +129,15 @@ void resolveAction(const string& line, string& action, string& arg) {
     }
 }
 
+void copyStringToCharArray(const string& source, char* destination, int maxLength) {
+    int i = 0;
+    while (i < source.size() && i < maxLength - 1) {
+        destination[i] = source[i];
+        i++;
+    }
+    destination[i] = '\0'; // koniec stringa
+}
+
 Animal resolveAnimal(const string& line) {
     Animal animal;
     string word = "";
@@ -141,11 +150,11 @@ Animal resolveAnimal(const string& line) {
             word += c;
         } else if (!word.empty()) {
             if (counter == 0) {
-                animal.type = word;
+                //animal.type = word;
             } else if (counter == 1) {
                 animal.weight = stoi(word);
             } else if (counter == 2) {
-                animal.name = word;
+                copyStringToCharArray(word, animal.name, 11);
             }
             counter++;
             word = "";

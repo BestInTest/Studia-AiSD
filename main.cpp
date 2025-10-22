@@ -5,13 +5,31 @@ using std::string;
 
 struct Animal {
     string type; // gatunek
-    int weight = 0;
-    string name;
+    int weight = 0; // tutaj też można spróbować zmienić z int na short
+    string name; // todo: zmienić na char[11] jeśli będzie zabierać za dużo pamięci
 };
 
-void ile(string& animalType, Animal arr[], int size);
-void ros(string& animalType, Animal arr[], int size);
-void mal(string& animalType, Animal arr[], int size);
+Animal zoo[8][10001];
+int sizes[8] = {};
+
+int getIndexFor(string& animalType) {
+    char c = animalType[0];
+    switch(c) {
+        case 'b': return 0; // bizon
+        case 'a': return 1; // ara
+        case 'n': return 2; // nosorozec
+        case 'h': return 3; // hipopotam
+        case 's': return 4; // szympans
+        case 'g': return 5; // gnu
+        case 'p': return 6; // paw
+        case 'z': return 7; // zebra
+        default: return -1;
+    }
+}
+
+void ile(int size);
+void ros(Animal arr[], int size);
+void mal(Animal arr[], int size);
 void addAndSort(Animal animal, Animal arr[], int& size);
 void resolveAction(const string& line, string& action, string& arg);
 Animal resolveAnimal(const string& line);
@@ -22,74 +40,66 @@ int main() {
     std::cout.tie(nullptr);
     std::cin.tie(nullptr);
 
-    int n;
     string linia;
+    string action;
+    string type;
+
+    int n;
     std::cin >> n;
     std::cin.ignore();
-    Animal arr[n]; // sus
-    int currentSize = 0;
 
     for (int i = 0; i < n; i++) {
-        //naśladować insertion sort - wstawiać od razu w odpowiednie miejsce zamiast sortować przy każdej komendzie
-        //ewentualnie po dodaniu sortować od razu (i ustawiać flagę??)
         std::getline(std::cin, linia);
-        string action;
-        string arg;
-        resolveAction(linia, action, arg);
+        resolveAction(linia, action, type);
+        //std::cout << "Action: " << action << ", Type: " << type << "\n";
+
+        int index = getIndexFor(type);
+        Animal* arr = zoo[index];
+        int& currentSize = sizes[index];
         if (action == "ile") {
-            //std::cout << "ile" << "\n";
-            ile(arg, arr, currentSize);
+            ile(currentSize);
         } else if (action == "ros") {
-            //std::cout << "ros" << "\n";
-            ros(arg, arr, currentSize);
+            ros(arr, currentSize);
         } else if (action == "mal") {
-            //std::cout << "mal" << "\n";
-            mal(arg, arr, currentSize);
+            mal(arr, currentSize);
         } else {
-            //std::cout << "add" << "\n";
             Animal animal = resolveAnimal(linia);
-            addAndSort(animal, arr, currentSize);
+            index = getIndexFor(animal.type); //nadpisanie zmiennej dlatego że przy dodawaniu zwierząt kolejność argumentów jest inna
+            addAndSort(animal, zoo[index], sizes[index]); // tutaj jest problem
         }
+
+        //resetowanie zmiennych
+        action = "";
+        type = "";
     }
 }
 
-void ile(string& animalType, Animal arr[], int size) {
-    int count = 0;
-    for (int i = 0; i < size; i++) {
-        if (arr[i].type == animalType) {
-            count++;
-        }
-    }
-    //std::cout << "ile " << animalType << ": " << count << "\n";
-    std::cout << count << "\n";
+void ile(int size) {
+    std::cout << size << "\n";
 }
 
-void ros(string& animalType, Animal arr[], int size) {
+void ros(Animal arr[], int size) {
     //standardowe wypisywanie bo sortowanie jest od najmniejszej masy do największej
-    bool foundAntyhing = false;
-    for (int i = 0; i < size; i++) {
-        if (arr[i].type == animalType) {
-            std::cout << arr[i].name << " ";
-            foundAntyhing = true;
-        }
+    if (size == 0) {
+        std::cout << "-\n";
+        return;
     }
-    if (!foundAntyhing) {
-        std::cout << "-";
+
+    for (int i = 0; i < size; i++) {
+        std::cout << arr[i].name << " ";
     }
     std::cout << "\n";
 }
 
-void mal(string& animalType, Animal arr[], int size) {
+void mal(Animal arr[], int size) {
     //wypisywanie ale od tyłu
-    bool foundAntyhing = false;
-    for (int i = size - 1; i >= 0; i--) {
-        if (arr[i].type == animalType) {
-            std::cout << arr[i].name << " ";
-            foundAntyhing = true;
-        }
+    if (size == 0) {
+        std::cout << "-\n";
+        return;
     }
-    if (!foundAntyhing) {
-        std::cout << "-";
+
+    for (int i = size - 1; i >= 0; i--) {
+        std::cout << arr[i].name << " ";
     }
     std::cout << "\n";
 }

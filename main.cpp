@@ -81,10 +81,15 @@ void ros(string& animalType, Animal arr[], int size) {
 
 void mal(string& animalType, Animal arr[], int size) {
     //wypisywanie ale od tyłu
+    bool foundAntyhing = false;
     for (int i = size - 1; i >= 0; i--) {
         if (arr[i].type == animalType) {
             std::cout << arr[i].name << " ";
+            foundAntyhing = true;
         }
+    }
+    if (!foundAntyhing) {
+        std::cout << "-";
     }
     std::cout << "\n";
 }

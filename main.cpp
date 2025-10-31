@@ -142,7 +142,7 @@ public:
     }
 };
 
-Lemur getTopLemur(Lista& lemury);
+Lemur getBetter(const Lemur& lemur1, const Lemur& lemur2);
 
 void printList(Lista& lemury) {
     for (int i = 0; i <= lemury.last(); i++) {
@@ -161,6 +161,7 @@ int main() {
     std::cin >> n;
     std::cin.ignore();
 
+    Lemur bestLemur;
     Lista lemury;
     string name;
 
@@ -183,9 +184,13 @@ int main() {
         index = lemury.next(index);
 
         if (op == 'R') {
+            Lemur& currLemur = lemury.at(index);
             int points;
             std::cin >> points;
-            lemury.at(index).points += (char) points;
+            currLemur.points += (char) points;
+
+            // Aktualizacja najlepszego lemura
+            bestLemur = getBetter(bestLemur, currLemur);
             continue;
         }
 
@@ -203,22 +208,17 @@ int main() {
         }
     }
 
-    Lemur topLemur = getTopLemur(lemury);
-    std::cout << topLemur.name << " " << (int) topLemur.points << "\n";
+    std::cout << bestLemur.name << " " << (int) bestLemur.points << "\n";
     return 0;
 }
 
-Lemur getTopLemur(Lista& lemury) {
-    Lemur topLemur;
-    char maxPoints = 0;
-
-    for (int i = 0; i <= lemury.last(); i++) {
-        if (lemury.next(i) == 0) break; // zapobiega przekroczeniu zakresu w cyklicznej liście
-        Lemur& currentLemur = lemury.at(i);
-        if (currentLemur.points > maxPoints) {
-            maxPoints = currentLemur.points;
-            topLemur = currentLemur;
-        }
+Lemur getBetter(const Lemur& lemur1, const Lemur& lemur2) {
+    if (lemur1.points > lemur2.points) {
+        return lemur1;
     }
-    return topLemur;
+    if (lemur2.points > lemur1.points) {
+        return lemur2;
+    }
+    // Równa liczba punktów, zwracamy pierwszego
+    return lemur1;
 }

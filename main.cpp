@@ -144,10 +144,18 @@ public:
 
 Lemur getTopLemur(Lista& lemury);
 
+void printList(Lista& lemury) {
+    for (int i = 0; i <= lemury.last(); i++) {
+        Lemur& l = lemury.at(i);
+        std::cout << l.name << " " << (int) l.points << "\n";
+    }
+    std::cout << "--------------------" << std::endl;
+}
+
 int main() {
-    //std::ios_base::sync_with_stdio(false);
-    //std::cout.tie(nullptr);
-    //std::cin.tie(nullptr);
+    std::ios_base::sync_with_stdio(false);
+    std::cout.tie(nullptr);
+    std::cin.tie(nullptr);
 
     int n;
     std::cin >> n;
@@ -170,19 +178,18 @@ int main() {
         if (op == 'X') {
             break;
         }
+        //printList(lemury);
 
         index = lemury.next(index);
 
         if (op == 'R') {
-            index = lemury.next(index);
             int points;
             std::cin >> points;
-            lemury.at(index).points = (char) points;
+            lemury.at(index).points += (char) points;
             continue;
         }
 
         if (op == 'J') {
-            index = lemury.next(index);
             Lemur newLemur;
             std::cin >> newLemur.name;
             lemury.insert(index, newLemur);
@@ -191,13 +198,13 @@ int main() {
 
         if (op == 'L') {
             lemury.erase(index);
-            index = lemury.next(index - 1); // dostosuj indeks po usunięciu
+            index -= 1; // dostosuj indeks po usunięciu
             continue;
         }
     }
 
     Lemur topLemur = getTopLemur(lemury);
-    std::cout << topLemur.name << " " << (int) topLemur.points << std::endl;
+    std::cout << topLemur.name << " " << (int) topLemur.points << "\n";
     return 0;
 }
 

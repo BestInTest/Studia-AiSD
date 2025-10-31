@@ -3,23 +3,28 @@
 
 using std::string;
 
+struct Lemur {
+    string name; // char name[16];
+    char points = -1;
+};
+
 class Lista {
 private:
     struct Node {
-        typ_danych val;
+        Lemur val;
         Node* next;
-        Node(const typ_danych& v, Node* nx=nullptr) : val(v), next(nx) {}
+        Node(const Lemur& v, Node* nx=nullptr) : val(v), next(nx) {}
     };
     Node* head; // pierwszy element (glowa)
     Node* tail; // ostatni element (ogon)
     unsigned int n;
-    Node* node_at(pozycja p) {
+    Node* node_at(int p) {
         Node* cur = head;
-        for (pozycja i=0; i<p && cur; ++i) cur = cur->next;
+        for (int i=0; i<p && cur; ++i) cur = cur->next;
         return cur; // nullptr jeśli poza zakresem
     }
-    Node* node_before(pozycja p) {
-        if (p==0) return nullptr;
+    Node* node_before(int p) {
+        if (p == 0) return nullptr;
         return node_at(p-1);
     }
 
@@ -34,21 +39,21 @@ public:
         }
     }
     bool empty() { return n == 0; }
-    typ_danych Lista::front() {
+    Lemur front() {
         // zalozenie: lista niepusta
         return head->val;
     }
-    typ_danych Lista::back() {
+    Lemur back() {
         // zalozenie: lista niepusta
         return tail->val;
     }
-    void Lista::push_front(typ_danych x) {
+    void push_front(Lemur x) {
         Node* nowy = new Node(x, head);
         head = nowy;
         if (!tail) tail = nowy; // jesli wczesniej pusto
         ++n;
     }
-    void Lista::push_back(typ_danych x) {
+    void push_back(Lemur x) {
         Node* nowy = new Node(x);
         if (!head) { // pusta lista
             head=tail=nowy;
@@ -82,7 +87,7 @@ public:
         tail->next = nullptr;
         --n;
     }
-    void insert(pozycja p, typ_danych x) {
+    void insert(int p, Lemur x) {
         if (p > n) throw "Zly indeks"; //dopuszczamy p == n (na koniec)
         if (p == 0) { push_front(x); return; }
         if (p == n) { push_back(x); return; }
@@ -92,7 +97,7 @@ public:
         prev->next = nowy;
         ++n;
     }
-    void Lista::erase(pozycja p) {
+    void erase(int p) {
         if (p >= n) throw "Zly indeks";
         if (p == 0) { pop_front(); return; }
         Node* prev = node_before(p); // O(p)
@@ -102,13 +107,13 @@ public:
         delete del;
         --n;
     }
-    pozycja Lista::first() { return n == 0 ? 0u : 0u; }
-    pozycja Lista::last() { return n == 0 ? 0u : (n-1); }
-    pozycja Lista::next(pozycja p) {
+    int first() { return n == 0 ? 0u : 0u; }
+    int last() { return n == 0 ? 0u : (n-1); }
+    int next(int p) {
         if (p+1 >= n) throw "Brak nastepnika";
         return p+1;
     }
-    typ_danych& Lista::at(pozycja p) {
+    Lemur& at(int p) {
         if (p >= n) throw "Zly indeks";
         Node* nd = node_at(p); // O(p)
         return nd->val;
@@ -123,4 +128,50 @@ int main() {
     int n;
     std::cin >> n;
     std::cin.ignore();
+
+    Lista lemury;
+    string name;
+
+    //zrobic jakis counter na ktorej jestesmy pozycji na liscie albo zrobic to bezposrednio w implementacji listy (node?)
+
+    while (n--) {
+        std::cin >> name;
+        Lemur l;
+        l.name = name;
+        lemury.push_back(l);
+    }
+
+    int index = 0;
+    char op = '\0';
+
+    while (op != 'X') {
+        std::cin >> op;
+
+        if (op == 'R') {
+
+            continue;
+        }
+
+        if (op == 'J') {
+            continue;
+        }
+
+        if (op == 'L') {
+            continue;
+        }
+    }
+}
+
+Lemur getTopPoints(Lista& lemury) {
+    Lemur topLemur;
+    char maxPoints = -1;
+
+    for (int i = lemury.first(); i <= lemury.last(); i = lemury.next(i)) {
+        Lemur& currentLemur = lemury.at(i);
+        if (currentLemur.points > maxPoints) {
+            maxPoints = currentLemur.points;
+            topLemur = currentLemur;
+        }
+    }
+    return topLemur;
 }

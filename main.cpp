@@ -5,9 +5,10 @@ using std::string;
 
 struct Lemur {
     string name; // char name[16];
-    char points = -1;
+    char points = 0;
 };
 
+// Jednokierunkowa lista cykliczna
 class Lista {
 private:
     struct Node {
@@ -31,13 +32,17 @@ private:
 public:
     Lista() : head(nullptr), tail(nullptr), n(0) {}
     ~Lista() {
+        while (!empty()) pop_front();
+    }
+    /*
+    ~Lista() {
         Node* cur = head;
         while (cur) {
             Node* nx = cur->next;
             delete cur;
             cur = nx;
         }
-    }
+    }*/
     bool empty() { return n == 0; }
     Lemur front() {
         // zalozenie: lista niepusta
@@ -49,44 +54,60 @@ public:
     }
     void push_front(Lemur x) {
         Node* nowy = new Node(x, head);
-        head = nowy;
-        if (!tail) tail = nowy; // jesli wczesniej pusto
+        if (!head) {
+            head = tail = nowy;
+            nowy->next = nowy;
+        } else {
+            head = nowy;
+            tail->next = head; // ogon wskazuje na nowa glowe
+        }
         ++n;
     }
     void push_back(Lemur x) {
         Node* nowy = new Node(x);
         if (!head) { // pusta lista
-            head=tail=nowy;
+            head = tail = nowy;
+            nowy->next = nowy; //cykl 1-elementowy
         } else {
-            tail->next= nowy; // dopinamy na ogon
-            tail=nowy;
+            tail->next = nowy; // dopinamy na ogon
+            tail = nowy;
+            tail->next = head; // domknij cykl
         }
         ++n;
     }
     void pop_front() {
         // zal.: n > 0
-        Node* del = head;
-        head = head->next;
-        if (!head) tail = nullptr; // usunieto jedyny element
-        delete del;
-        --n;
-    }
-    void pop_back() {
-        //zal.: n > 0
-        if (head==tail) { // jeden element
+        if (head == tail) {
             delete head;
             head = tail = nullptr;
             n = 0;
             return;
         }
-        //znajdz przedostatni(O(n))
-        Node* prev = head;
-        while (prev->next != tail) prev = prev->next;
-        delete tail;
-        tail = prev;
-        tail->next = nullptr;
+        Node* del = head;
+        head = head->next;
+        tail->next = head;
+        delete del;
         --n;
     }
+    void pop_back() {
+        //zal.: n > 0
+        if (head == tail) {
+            delete tail;
+            head = tail = nullptr;
+            n = 0;
+            return;
+        }
+        Node* prev = head;
+        while (prev->next != tail) prev = prev->next; // O(n)
+        delete tail;
+        tail = prev;
+        tail->next = head;
+        --n;
+    }
+    /*
+    * "insert/erase działają jak wcześniej, ale pamiętaj o utrzymaniu
+    * tail->next=head."
+    */
     void insert(int p, Lemur x) {
         if (p > n) throw "Zly indeks"; //dopuszczamy p == n (na koniec)
         if (p == 0) { push_front(x); return; }
@@ -110,7 +131,8 @@ public:
     int first() { return n == 0 ? 0u : 0u; }
     int last() { return n == 0 ? 0u : (n-1); }
     int next(int p) {
-        if (p+1 >= n) throw "Brak nastepnika";
+        //if (p+1 >= n) throw "Brak nastepnika";
+        if (p+1 >= n) return 0; // powrót na początek bo lista cykliczna
         return p+1;
     }
     Lemur& at(int p) {
@@ -120,10 +142,12 @@ public:
     }
 };
 
+Lemur getTopLemur(Lista& lemury);
+
 int main() {
-    std::ios_base::sync_with_stdio(false);
-    std::cout.tie(nullptr);
-    std::cin.tie(nullptr);
+    //std::ios_base::sync_with_stdio(false);
+    //std::cout.tie(nullptr);
+    //std::cin.tie(nullptr);
 
     int n;
     std::cin >> n;
@@ -132,8 +156,6 @@ int main() {
     Lista lemury;
     string name;
 
-    //zrobic jakis counter na ktorej jestesmy pozycji na liscie albo zrobic to bezposrednio w implementacji listy (node?)
-
     while (n--) {
         std::cin >> name;
         Lemur l;
@@ -141,32 +163,50 @@ int main() {
         lemury.push_back(l);
     }
 
-    int index = 0;
+    int index = -1;
     char op = '\0';
 
-    while (op != 'X') {
-        std::cin >> op;
+    while (std::cin >> op) {
+        if (op == 'X') {
+            break;
+        }
+
+        index = lemury.next(index);
 
         if (op == 'R') {
-
+            index = lemury.next(index);
+            int points;
+            std::cin >> points;
+            lemury.at(index).points = (char) points;
             continue;
         }
 
         if (op == 'J') {
+            index = lemury.next(index);
+            Lemur newLemur;
+            std::cin >> newLemur.name;
+            lemury.insert(index, newLemur);
             continue;
         }
 
         if (op == 'L') {
+            lemury.erase(index);
+            index = lemury.next(index - 1); // dostosuj indeks po usunięciu
             continue;
         }
     }
+
+    Lemur topLemur = getTopLemur(lemury);
+    std::cout << topLemur.name << " " << (int) topLemur.points << std::endl;
+    return 0;
 }
 
-Lemur getTopPoints(Lista& lemury) {
+Lemur getTopLemur(Lista& lemury) {
     Lemur topLemur;
-    char maxPoints = -1;
+    char maxPoints = 0;
 
-    for (int i = lemury.first(); i <= lemury.last(); i = lemury.next(i)) {
+    for (int i = 0; i <= lemury.last(); i++) {
+        if (lemury.next(i) == 0) break; // zapobiega przekroczeniu zakresu w cyklicznej liście
         Lemur& currentLemur = lemury.at(i);
         if (currentLemur.points > maxPoints) {
             maxPoints = currentLemur.points;

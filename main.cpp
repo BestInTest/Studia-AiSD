@@ -8,13 +8,14 @@ struct Lemur {
     char points = 0;
 };
 
-// Jednokierunkowa lista cykliczna
+// Dwukierunkowa lista cykliczna
 class Lista {
 private:
     struct Node {
         Lemur val;
         Node* next;
-        Node(const Lemur& v, Node* nx=nullptr) : val(v), next(nx) {}
+        Node* prev;
+        Node(const Lemur& v, Node* nx=nullptr, Node* pv=nullptr) : val(v), next(nx), prev(pv) {}
     };
     Node* head; // pierwszy element (glowa)
     Node* tail; // ostatni element (ogon)
@@ -53,18 +54,19 @@ public:
         return tail->val;
     }
     void push_front(Lemur x) {
-        Node* nowy = new Node(x, head);
+        Node* nowy = new Node(x, /*next*/head, /*prev*/nullptr);
         if (!head) {
             head = tail = nowy;
             nowy->next = nowy;
         } else {
+            head->prev = nowy;
             head = nowy;
             tail->next = head; // ogon wskazuje na nowa glowe
         }
         ++n;
     }
     void push_back(Lemur x) {
-        Node* nowy = new Node(x);
+        Node* nowy = new Node(x, /*next*/nullptr, /*prev*/tail);
         if (!head) { // pusta lista
             head = tail = nowy;
             nowy->next = nowy; //cykl 1-elementowy
@@ -85,6 +87,7 @@ public:
         }
         Node* del = head;
         head = head->next;
+        head->prev = tail; // utrzymaj dwukierunkowe powiązania w liście cyklicznej
         tail->next = head;
         delete del;
         --n;
@@ -97,11 +100,17 @@ public:
             n = 0;
             return;
         }
-        Node* prev = head;
-        while (prev->next != tail) prev = prev->next; // O(n)
-        delete tail;
+        Node* del = tail;
+        Node* prev = tail->prev;
+        if (!prev) {
+            // fallback jeśli prev nie był utrzymywany: O(n)
+            prev = head;
+            while (prev->next != tail) prev = prev->next;
+        }
+        prev->next = head;
+        head->prev = prev;
         tail = prev;
-        tail->next = head;
+        delete del;
         --n;
     }
     /*
@@ -109,13 +118,15 @@ public:
     * tail->next=head."
     */
     void insert(int p, Lemur x) {
-        if (p > n) throw "Zly indeks"; //dopuszczamy p == n (na koniec)
+        if (p > n) throw "Zly indeks"; // dopuszczamy p == n (na koniec)
         if (p == 0) { push_front(x); return; }
         if (p == n) { push_back(x); return; }
-        Node* prev = node_before(p); //O(p)
+        Node* prev = node_before(p); // O(p)
         if (!prev || !prev->next) throw "Zly indeks";
-        Node* nowy = new Node(x,prev->next);
+        Node* next = prev->next;
+        Node* nowy = new Node(x, next, prev);
         prev->next = nowy;
+        next->prev = nowy;
         ++n;
     }
     void erase(int p) {
@@ -123,8 +134,16 @@ public:
         if (p == 0) { pop_front(); return; }
         Node* prev = node_before(p); // O(p)
         Node* del = prev->next;
-        prev->next = del->next;
-        if (del == tail) tail = prev; // aktualizacja ogona
+        Node* next = del->next;
+        // połącz prev z next
+        prev->next = next;
+        if (next) next->prev = prev;
+        // jeśli usuwamy ogon, zaktualizuj tail i utrzymaj cykl
+        if (del == tail) {
+            tail = prev;
+            tail->next = head;
+            head->prev = tail;
+        }
         delete del;
         --n;
     }

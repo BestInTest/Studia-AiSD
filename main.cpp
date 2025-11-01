@@ -10,13 +10,14 @@ struct Lemur {
 
 // Dwukierunkowa lista cykliczna
 class Lista {
-private:
+public:
     struct Node {
         Lemur val;
         Node* next;
         Node* prev;
         Node(const Lemur& v, Node* nx=nullptr, Node* pv=nullptr) : val(v), next(nx), prev(pv) {}
     };
+private:
     Node* head; // pierwszy element (glowa)
     Node* tail; // ostatni element (ogon)
     unsigned int n;
@@ -129,6 +130,35 @@ public:
         next->prev = nowy;
         ++n;
     }
+    // Wstawia nowy węzeł przed podanym `pos`. Jeśli `pos == nullptr` => push_back.
+    void insert_before(Node* pos, const Lemur& x) {
+        if (!pos) { // traktujemy jako dodanie na koniec
+            push_back(x);
+            return;
+        }
+        if (!head) { // pusta lista
+            Node* nowy = new Node(x, nullptr, nullptr);
+            head = tail = nowy;
+            nowy->next = nowy;
+            nowy->prev = nowy;
+            ++n;
+            return;
+        }
+        if (pos == head) { // wstawienie przed głową -> nowa głowa
+            Node* nowy = new Node(x, head, tail);
+            head->prev = nowy;
+            tail->next = nowy;
+            head = nowy;
+            ++n;
+            return;
+        }
+        // przypadek ogólny
+        Node* prev = pos->prev;
+        Node* nowy = new Node(x, pos, prev);
+        prev->next = nowy;
+        pos->prev = nowy;
+        ++n;
+    }
     void erase(int p) {
         if (p >= n) throw "Zly indeks";
         if (p == 0) { pop_front(); return; }
@@ -147,6 +177,38 @@ public:
         delete del;
         --n;
     }
+    void erase(Node* del) {
+        if (!del || !head) throw "Zly indeks";
+        // jedyny element
+        if (head == tail && del == head) {
+            delete head;
+            head = tail = nullptr;
+            n = 0;
+            return;
+        }
+        Node* prev = del->prev;
+        Node* next = del->next;
+        // fallback jeśli prev/next nie były utrzymywane
+        if (!prev) {
+            prev = head;
+            while (prev->next != del) prev = prev->next;
+        }
+        if (!next) {
+            next = head;
+            while (next->prev != del) next = next->next;
+        }
+        // połącz prev z next
+        prev->next = next;
+        next->prev = prev;
+        // zaktualizuj head/tail jeśli usuwamy na końcach
+        if (del == head) head = next;
+        if (del == tail) tail = prev;
+        // utrzymaj cykl
+        tail->next = head;
+        head->prev = tail;
+        delete del;
+        --n;
+    }
     int first() { return n == 0 ? 0u : 0u; }
     int last() { return n == 0 ? 0u : (n-1); }
     int next(int p) {
@@ -159,6 +221,8 @@ public:
         Node* nd = node_at(p); // O(p)
         return nd->val;
     }
+    Node* getHead() { return head; }
+    Node* getTail() { return tail; }
 };
 
 Lemur getBetter(const Lemur& lemur1, const Lemur& lemur2);
@@ -191,7 +255,7 @@ int main() {
         lemury.push_back(l);
     }
 
-    int index = -1;
+    Lista::Node* curr = lemury.getTail();
     char op = '\0';
 
     while (std::cin >> op) {
@@ -200,10 +264,12 @@ int main() {
         }
         //printList(lemury);
 
-        index = lemury.next(index);
+        //if (!curr) curr = lemury.getHead();
+        //if (!curr) break;
+        curr = curr->next;
 
         if (op == 'R') {
-            Lemur& currLemur = lemury.at(index);
+            Lemur& currLemur = curr->val;
             int points;
             std::cin >> points;
             currLemur.points += (char) points;
@@ -216,13 +282,14 @@ int main() {
         if (op == 'J') {
             Lemur newLemur;
             std::cin >> newLemur.name;
-            lemury.insert(index, newLemur);
+            lemury.insert_before(curr, newLemur);
+            curr = curr->prev; // dostosuj curr do nowo wstawionego lemura
             continue;
         }
 
         if (op == 'L') {
-            lemury.erase(index);
-            index -= 1; // dostosuj indeks po usunięciu
+            lemury.erase(curr);
+            //index -= 1; // dostosuj indeks po usunięciu
             continue;
         }
     }

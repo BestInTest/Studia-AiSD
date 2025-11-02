@@ -5,7 +5,7 @@ using std::string;
 
 struct Lemur {
     string name; // char name[16];
-    char points = 0;
+    int points = 0;
 };
 
 // Dwukierunkowa lista cykliczna

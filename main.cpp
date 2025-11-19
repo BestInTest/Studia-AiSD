@@ -188,6 +188,10 @@ int main() {
             stack.push(transport);
         }
 
+        // Pominięcie pustego transportu
+        if (stack.empty()) {
+            continue;
+        }
 
         // Jeżeli nie ma korzenia to trzeba go stworzyć
         if (root == nullptr) {

@@ -91,26 +91,66 @@ public:
 };
 
 // Prosta kolejka potrzebna do budowania drzewa (FIFO)
-const int MAX_NODES = 1000005; // Ponieważ wiemy że max stref to 1000000
-Node* kolejka[MAX_NODES];
-int q_head = 0;
-int q_tail = 0;
+class MyQueue {
+private:
+    Node** data;
+    int capacity;
+    int q_head;
+    int q_tail;
 
-void q_push(Node* node) {
-    kolejka[q_tail++] = node;
-}
+public:
+    MyQueue() {
+        capacity = 128; // Zaczynamy od małej wartości
+        data = new Node*[capacity];
+        q_head = 0;
+        q_tail = 0;
+    }
 
-void q_pop() {
-    q_head++;
-}
+    ~MyQueue() {
+        delete[] data;
+    }
 
-Node* q_front() {
-    return kolejka[q_head];
-}
+    void push(Node* node) {
+        // Jeśli tablica jest pełna zwiększamy pojemność
+        if (q_tail == capacity) {
+            if (q_head > capacity / 2) {
+                int size = q_tail - q_head;
+                for (int i = 0; i < size; i++) {
+                    data[i] = data[q_head + i];
+                }
+                q_head = 0;
+                q_tail = size;
+            } else {
+                // Zwiększamy rozmiar tablicy
+                capacity *= 2;
+                Node** new_data = new Node*[capacity];
+                for (int i = q_head; i < q_tail; i++) {
+                    new_data[i] = data[i];
+                }
+                delete[] data;
+                data = new_data;
+            }
+        }
+        data[q_tail++] = node;
+    }
 
-bool q_empty() {
-    return q_head == q_tail;
-}
+    void pop() {
+        q_head++;
+    }
+
+    Node* front() {
+        return data[q_head];
+    }
+
+    bool empty() {
+        return q_head == q_tail;
+    }
+
+    void clear() {
+        q_head = 0;
+        q_tail = 0;
+    }
+};
 
 void print_postorder(Node* node) {
     if (node == nullptr) return;
@@ -135,6 +175,7 @@ int main() {
     std::cin >> t;
 
     MyStack stack = MyStack(1024);
+    MyQueue queue;
     Node* root = nullptr;
 
     // pętla po wszystkich transportach
@@ -152,7 +193,7 @@ int main() {
         if (root == nullptr) {
             root = new Node(stack.top());
             stack.pop();
-            q_push(root); // Dodajemy korzeń do kolejki budowy
+            queue.push(root); // Dodajemy korzeń do kolejki budowy
         }
 
         while (!stack.empty()) {
@@ -162,13 +203,13 @@ int main() {
             Node* newNode = new Node(val);
 
             // Szukamy w kolejce rodzica który ma wolne miejsce (ponizej 3 dzieci)
-            while (!q_empty() && q_front()->child_count == 3) {
-                q_pop(); // Ten węzeł jest już pełny więc go zdejmujemy
+            while (!queue.empty() && queue.front()->child_count == 3) {
+                queue.pop(); // Ten węzeł jest już pełny więc go zdejmujemy
             }
 
-            Node* parent = q_front(); // Pobieramy rodzica
+            Node* parent = queue.front(); // Pobieramy rodzica
             parent->add_child(newNode); // Dodajemy nowe dziecko
-            q_push(newNode); // Dodajemy nowe dziecko do kolejki
+            queue.push(newNode); // Dodajemy nowe dziecko do kolejki
         }
 
         /*
@@ -176,14 +217,13 @@ int main() {
          * (ma 1 lub 2 dzzieci) to uznajemy go za zamkniętego.
          * Następny transport musi się zacząć od nowego (pustego) węzła.
         */
-        if (!q_empty()) {
-            Node* frontNode = q_front();
+        if (!queue.empty()) {
+            Node* frontNode = queue.front();
             if (frontNode->child_count > 0 && frontNode->child_count < 3) { // Jesli ma 1 lub 2 dzieci to usuwamy go z kolejki
-                q_pop();
+                queue.pop();
             }
         }
     }
 
-    // Wypisanie wyniku
     print_postorder(root);
 }

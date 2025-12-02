@@ -49,7 +49,7 @@ bool bfs(vector<Node>& arr, int start, int end, int water_level) {
 
     while (!q.empty()) {
         int z = q.front();
-        std::cout << z << "\n";
+        //std::cout << z << "\n";
         q.pop();
 
         for (int neighbor : arr[z].neighbors) {
@@ -63,8 +63,8 @@ bool bfs(vector<Node>& arr, int start, int end, int water_level) {
                 return true;
             }
         }
-        return false; // ścieżka nie istnieje
     }
+    return false; // ścieżka nie istnieje
 }
 
 // bfs(vector<vector<int>>& graph, int start, int target, int max_depth)???

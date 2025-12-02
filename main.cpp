@@ -12,7 +12,6 @@ struct Node {
     vector<int> neighbors;
 };
 
-//przejście wszerz z ograniczeniem wysokości
 bool bfs(vector<Node>& arr, int start, int end, long water_level) {
     if (arr[start].height < water_level || arr[end].height < water_level) {
         return false;
@@ -23,7 +22,7 @@ bool bfs(vector<Node>& arr, int start, int end, long water_level) {
 
     queue<int> q;
     q.push(start);
-    vector<bool> visited(arr.size());
+    vector<bool> visited(arr.size(), false);
     visited[start] = true;
 
     while (!q.empty()) {
@@ -31,7 +30,7 @@ bool bfs(vector<Node>& arr, int start, int end, long water_level) {
         q.pop();
 
         for (int neighbor : arr[z].neighbors) {
-            //FIXME: >= czy > ?
+            // Pomijamy odwiedzone lub zalane miejsca
             if (visited[neighbor] || arr[neighbor].height < water_level) {
                 continue;
             }
@@ -63,13 +62,9 @@ int main() {
 
     for (int i = 0; i < krawedzie; i++) {
         int a, b;
-        std::cin >> a;
-
-        // dodawanie sąsiada tylko jeśli jest podany
-        if (std::cin >> b) {
-            graph[a].neighbors.push_back(b);
-            //graph[b].neighbors.push_back(a);
-        }
+        std::cin >> a >> b;
+        graph[a].neighbors.push_back(b);
+        graph[b].neighbors.push_back(a);
     }
 
     // wczytywanie punktu początkowego i końcowego
@@ -78,23 +73,27 @@ int main() {
 
     // wczytywanie zmian poziomu wody
     long current_water_level = 0;
-    short zmiany_poziomu_wody;
+    int zmiany_poziomu_wody;
     std::cin >> zmiany_poziomu_wody;
 
-    // do przechowywania wyników dla różnych poziomów wody (może zawierać wartości ujemne)
-    std::unordered_map<long, string> result_cache;
+    std::unordered_map<long, bool> result_cache;
 
     for (int i = 0; i < zmiany_poziomu_wody; i++) {
         int change;
         std::cin >> change;
         current_water_level += change;
 
-        if (result_cache[current_water_level].empty()) {
-            string result = bfs(graph, start, end, current_water_level) ? "TAK\n" : "NIE\n";
-            std::cout << result;
-            result_cache[current_water_level] = result;
+        bool result;
+        // Sprawdzamy czy mamy już wynik dla tego poziomu wody
+        if (result_cache.find(current_water_level) != result_cache.end()) {
+            result = result_cache[current_water_level];
         } else {
-            std::cout << result_cache[current_water_level];
+            result = bfs(graph, start, end, current_water_level);
+            result_cache[current_water_level] = result;
         }
+
+        std::cout << (result ? "TAK\n" : "NIE\n");
     }
+
+    return 0;
 }

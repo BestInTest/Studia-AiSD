@@ -8,7 +8,6 @@ using std::vector;
 using std::queue;
 
 struct Node {
-    int id = 0;
     int height = 0;
     vector<int> neighbors;
 };
@@ -38,12 +37,12 @@ bool bfs(vector<Node>& arr, int start, int end, int water_level) {
                 continue;
             }
 
-            q.push(neighbor);
-            visited[neighbor] = true;
-
             if (neighbor == end) {
                 return true;
             }
+
+            q.push(neighbor);
+            visited[neighbor] = true;
         }
     }
     return false; // ścieżka nie istnieje
@@ -60,8 +59,6 @@ int main() {
     vector<Node> graph(szczyty);
 
     for (int i = 0; i < szczyty; ++i) {
-        //TODO: trzeba będzie posortować?
-        graph[i].id = i;
         std::cin >> graph[i].height;
         //std::cout << "Wierzchołek " << i << " ma wysokość " << graph[i].height << "\n";
     }

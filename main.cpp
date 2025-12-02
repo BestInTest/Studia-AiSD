@@ -6,41 +6,13 @@ using std::string;
 using std::vector;
 using std::queue;
 
-// zrobić (zmodyfikowane?) przejście wszerz
-// trzeba ograniczyć liczbę przejść wszerz
-// bfs?
-// są różne sposoby ograniczania przejść wszerz
-// nie dsu
-/*
- * kod przejścia wszerz
- * bfs(vector<vector<int>>& arr, int start) {
- *     queue<int> q;
- *     q.push(start);
- *     vector<bool> visited(arr.size(), false);
- *     visited[start] = true;
- *
- *     while (!q.empty()) {
- *         int z = q.front();
- *         cout << z << "\n";
- *         q.pop();
- *
- *         for (int neighbor : arr[z]) {
- *             if (!visited[neighbor]) {
- *                 q.push(neighbor);
- *                 visited[neighbor] = true;
- *             }
- *         }
- *     }
- * }
- */
-
 struct Node {
     int id = 0;
     int height = 0;
     vector<int> neighbors;
 };
 
-//przejście wszerz z ograniczeniem głębokości/dystansu
+//przejście wszerz z ograniczeniem wysokości
 bool bfs(vector<Node>& arr, int start, int end, int water_level) {
     queue<int> q;
     q.push(start);

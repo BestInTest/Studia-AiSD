@@ -32,10 +32,10 @@ using std::string;
 
 /*
  * kod przejścia wszerz z ograniczeniem głębokości/dystansu
- * bfs(vector<vector<int>>& arr, int start) {
+ * bfs(vector<vector<int>>& arr, int start, int end) {
  *     queue<int> q;
  *     q.push(start);
- *     vector<bool> visited(arr.size(), false);
+ *     vector<bool> visited(arr.size());
  *     visited[start] = true;
  *     vector<int> dist(arr.size()-1);
  *     dist[start] = 0;
@@ -51,8 +51,11 @@ using std::string;
  *                 visited[neighbor] = true;
  *                 dist[neighbor] = dist[z] + 1;
  *             }
- *             // tutaj albo za nawiasem ponizej jakis if ma byc
+ *             if (neighbor == end) {
+ *                 return dist[neighbor];
+ *             }
  *         }
+ *         return -1; // nie znaleziono
  *     }
  * }
  */

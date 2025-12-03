@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <queue>
-#include <unordered_map>
 
 using std::string;
 using std::vector;
@@ -46,6 +45,14 @@ bool bfs(vector<Node>& arr, int start, int end, long water_level) {
     return false; // ścieżka nie istnieje
 }
 
+long max(long& a, long& b) {
+    return (a > b) ? a : b;
+}
+
+long min(long& a, long& b) {
+    return (a < b) ? a : b;
+}
+
 int main() {
     std::ios_base::sync_with_stdio(false);
     std::cout.tie(nullptr);
@@ -76,7 +83,8 @@ int main() {
     int zmiany_poziomu_wody;
     std::cin >> zmiany_poziomu_wody;
 
-    std::unordered_map<long, bool> result_cache;
+    long max_yes = -10000000L;  // maksymalny poziom przy którym była ścieżka
+    long min_no = 10000000L; // minimalny poziom przy którym nie było ścieżki
 
     for (int i = 0; i < zmiany_poziomu_wody; i++) {
         int change;
@@ -84,12 +92,20 @@ int main() {
         current_water_level += change;
 
         bool result;
-        // Sprawdzamy czy mamy już wynik dla tego poziomu wody
-        if (result_cache.find(current_water_level) != result_cache.end()) {
-            result = result_cache[current_water_level];
+
+        // Jeśli poziom <= max_yes to na pewno jest ściezka (mniej wody = więcej dostępnych miejsc)
+        if (current_water_level <= max_yes) {
+            result = true;
+        } else if (current_water_level >= min_no) { // Jeśli poziom >= min_no to na pewno nie ma ścieżki
+            result = false;
         } else {
             result = bfs(graph, start, end, current_water_level);
-            result_cache[current_water_level] = result;
+
+            if (result) {
+                max_yes = max(max_yes, current_water_level);
+            } else {
+                min_no = min(min_no, current_water_level);
+            }
         }
 
         std::cout << (result ? "TAK\n" : "NIE\n");

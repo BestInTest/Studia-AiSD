@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 struct Dzik {
     int x;
@@ -18,8 +19,18 @@ int main() {
         int n;
         std::cin >> n; // liczba dzikow w stadzie
 
+        std::vector<Dzik> dziki(n);
         for (int j = 0; j < n; ++j) {
+            std::cin >> dziki[j].x >> dziki[j].y >> dziki[j].p;
+        }
 
+        int m;
+        std::cin >> m;
+        for (int k = 0; k < m; ++k) {
+            int idx, dx, dy;
+            std::cin >> idx >> dx >> dy;
+            dziki[idx].x += dx;
+            dziki[idx].y += dy;
         }
     }
 

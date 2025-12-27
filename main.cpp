@@ -8,15 +8,15 @@ using std::vector;
 struct Boar {
     long long x;
     long long y;
-    int idx;
-    bool male;
+    int id;
+    bool male; // 0 = samica
 };
 
 struct Result {
     bool exists = false;
     long long dist = 0;
-    int female = -1;
-    int male = -1;
+    int femaleId = -1;
+    int maleId = -1;
 };
 
 bool compareX(const Boar &left, const Boar &right);
@@ -39,30 +39,30 @@ void considerPair(const Boar &a, const Boar &b, Result &best) {
     if (!best.exists || dist < best.dist) {
         best.exists = true;
         best.dist = dist;
-        best.female = female->idx;
-        best.male = male->idx;
+        best.femaleId = female->id;
+        best.maleId = male->id;
     } else if (dist == best.dist) {
-        if (female->idx < best.female || (female->idx == best.female && male->idx < best.male)) {
-            best.female = female->idx;
-            best.male = male->idx;
+        if (female->id < best.femaleId || (female->id == best.femaleId && male->id < best.maleId)) {
+            best.femaleId = female->id;
+            best.maleId = male->id;
         }
     }
 }
 
-Result pickBetter(const Result &lhs, const Result &rhs) {
-    if (!lhs.exists) { //TODO: wywalić existy?
-        return rhs;
+Result pickBetter(const Result &left, const Result &right) {
+    if (!left.exists) {
+        return right;
     }
-    if (!rhs.exists) {
-        return lhs;
+    if (!right.exists) {
+        return left;
     }
-    if (lhs.dist != rhs.dist) {
-        return lhs.dist < rhs.dist ? lhs : rhs;
+    if (left.dist != right.dist) {
+        return left.dist < right.dist ? left : right;
     }
-    if (lhs.female != rhs.female) {
-        return lhs.female < rhs.female ? lhs : rhs;
+    if (left.femaleId != right.femaleId) {
+        return left.femaleId < right.femaleId ? left : right;
     }
-    return lhs.male <= rhs.male ? lhs : rhs;
+    return left.maleId <= right.maleId ? left : right;
 }
 
 Result solveRange(vector<Boar> &pts, vector<Boar> &buffer, vector<Boar> &strip, int l, int r) {
@@ -128,30 +128,16 @@ Result solveRange(vector<Boar> &pts, vector<Boar> &buffer, vector<Boar> &strip, 
 }
 
 Result findClosestPair(const vector<Boar> &herd) {
-    bool hasFemale = false; // TODO: wywalić to sprawdzanie do returna
-    bool hasMale = false;
-    for (const Boar &b : herd) {
-        if (b.male) {
-            hasMale = true;
-        } else {
-            hasFemale = true;
-        }
-    }
-    if (!hasFemale || !hasMale) {
-        return {}; //TODO: return null?
-    }
-
     vector<Boar> tmp = herd;
     vector<Boar> buffer;
     vector<Boar> strip;
 
-    //work = herd;
     std::sort(tmp.begin(), tmp.end(), compareX);
     buffer.resize(tmp.size());
     strip.clear();
     strip.reserve(tmp.size());
 
-    return solveRange(tmp, buffer, strip, 0, (int) tmp.size()); //TODO: unsigned int?
+    return solveRange(tmp, buffer, strip, 0, (int) tmp.size());
 }
 
 void printAnswer(const Result &ans) {
@@ -159,7 +145,7 @@ void printAnswer(const Result &ans) {
         std::cout << "0\n";
         return;
     }
-    std::cout << ans.female << ' ' << ans.male << '\n';
+    std::cout << ans.femaleId << ' ' << ans.maleId << '\n';
 }
 
 int main() {
@@ -177,9 +163,11 @@ int main() {
         vector<Boar> dziki(n);
         for (int j = 0; j < n; ++j) {
             long long x, y;
-            int sex;
-            std::cin >> x >> y >> sex;
-            dziki[j] = {x, y, j, sex == 1};
+            int isMaleInput;
+            std::cin >> x >> y >> isMaleInput;
+
+            bool isMale = (isMaleInput == 1);
+            dziki[j] = {x, y, j, isMale};
         }
 
         printAnswer(findClosestPair(dziki));
@@ -187,11 +175,11 @@ int main() {
         int m;
         std::cin >> m;
         for (int call = 0; call < m; ++call) {
-            int idx;
-            long long dx, dy;
-            std::cin >> idx >> dx >> dy;
-            dziki[idx].x += dx;
-            dziki[idx].y += dy;
+            int id;
+            long long x, y;
+            std::cin >> id >> x >> y;
+            dziki[id].x += x;
+            dziki[id].y += y;
             printAnswer(findClosestPair(dziki));
         }
     }
@@ -206,7 +194,7 @@ bool compareX(const Boar &left, const Boar &right) {
     if (left.y != right.y) {
         return left.y < right.y;
     }
-    return left.idx < right.idx;
+    return left.id < right.id;
 }
 
 bool compareY(const Boar &left, const Boar &right) {
@@ -216,5 +204,5 @@ bool compareY(const Boar &left, const Boar &right) {
     if (left.x != right.x) {
         return left.x < right.x;
     }
-    return left.idx < right.idx;
+    return left.id < right.id;
 }

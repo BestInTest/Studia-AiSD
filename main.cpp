@@ -140,6 +140,7 @@ Result findClosestPair(const vector<Boar> &herd, vector<Boar> &buffer, vector<Bo
         }
     }
 
+    // Jeśli nadal nie ma pary to po prostu zwracamy bo to oznacza że i tak nic nie znajdziemy
     if (!best.exists) {
         return best;
     }

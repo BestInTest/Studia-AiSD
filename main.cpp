@@ -161,8 +161,10 @@ Result findClosestPair(const vector<Boar> &herd, vector<Boar> &buffer, vector<Bo
      *  Jeśli nadal nic nie znaleziono to i tak później nic nie znajdziemy więc robić returna?
      */
 
-    // Upewniamy się że bufory są wystarczająco duże
-    if (buffer.size() < tmp.size()) buffer.resize(tmp.size());
+    // Dostosowanie wielkości vecrtorow
+    if (buffer.size() < tmp.size()) {
+        buffer.resize(tmp.size());
+    }
     strip.reserve(tmp.size());
 
     return solveRange(tmp, buffer, strip, 0, (int) tmp.size(), best);
@@ -186,8 +188,6 @@ int main() {
 
     vector<Boar> buffer;
     vector<Boar> strip;
-    buffer.reserve(1000000);
-    strip.reserve(1000000);
 
     for (int i = 0; i < s; ++i) {
         int n;

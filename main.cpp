@@ -49,22 +49,6 @@ void considerPair(const Boar &a, const Boar &b, Result &best) {
     }
 }
 
-Result pickBetter(const Result &left, const Result &right) {
-    if (!left.exists) {
-        return right;
-    }
-    if (!right.exists) {
-        return left;
-    }
-    if (left.dist != right.dist) {
-        return left.dist < right.dist ? left : right;
-    }
-    if (left.femaleId != right.femaleId) {
-        return left.femaleId < right.femaleId ? left : right;
-    }
-    return left.maleId <= right.maleId ? left : right;
-}
-
 Result solveRange(vector<Boar> &pts, vector<Boar> &buffer, vector<Boar> &strip, int l, int r, Result &globalBest) {
     int len = r - l;
 
@@ -156,10 +140,9 @@ Result findClosestPair(const vector<Boar> &herd, vector<Boar> &buffer, vector<Bo
         }
     }
 
-    /*
-     * TODO:
-     *  Jeśli nadal nic nie znaleziono to i tak później nic nie znajdziemy więc robić returna?
-     */
+    if (!best.exists) {
+        return best;
+    }
 
     // Dostosowanie wielkości vecrtorow
     if (buffer.size() < tmp.size()) {

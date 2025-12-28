@@ -65,19 +65,18 @@ Result pickBetter(const Result &left, const Result &right) {
     return left.maleId <= right.maleId ? left : right;
 }
 
-Result solveRange(vector<Boar> &pts, vector<Boar> &buffer, vector<Boar> &strip, int l, int r) {
+Result solveRange(vector<Boar> &pts, vector<Boar> &buffer, vector<Boar> &strip, int l, int r, Result &globalBest) {
     int len = r - l;
 
     // jeśli jest 3 lub mniej punktów sprawdzamy wszystkie pary
     if (len <= 3) {
-        Result best;
         for (int i = l; i < r; ++i) {
             for (int j = i + 1; j < r; ++j) {
-                considerPair(pts[i], pts[j], best);
+                considerPair(pts[i], pts[j], globalBest);
             }
         }
-        std::sort(pts.begin() + l, pts.begin() + r, compareY);
-        return best;
+        std::sort(pts.begin() + l, pts.begin() + r, compareY); // sortowanie po Y
+        return globalBest;
     }
 
     // dzielimy na pół i wybieramy środkowy punkt
@@ -85,26 +84,25 @@ Result solveRange(vector<Boar> &pts, vector<Boar> &buffer, vector<Boar> &strip, 
     long long midX = pts[mid].x;
 
     // rozwiązujemy rekurencyjnie lewą i prawą połowę
-    Result left = solveRange(pts, buffer, strip, l, mid);
-    Result right = solveRange(pts, buffer, strip, mid, r);
-    Result best = pickBetter(left, right);
+    solveRange(pts, buffer, strip, l, mid, globalBest);
+    solveRange(pts, buffer, strip, mid, r, globalBest);
 
-    // scalanie punktów według Y (bo w if (len <= 3) je posortuje)
+    // scalanie punktów według Y
     std::merge(pts.begin() + l, pts.begin() + mid, pts.begin() + mid, pts.begin() + r, buffer.begin() + l, compareY);
     std::copy(buffer.begin() + l, buffer.begin() + r, pts.begin() + l);
 
     strip.clear();
-    //strip.reserve(len);
 
     // Wyznaczanie najmniejszej odległości
+    // Używamy globalBest.dist jako limitu
     // Jeśli nie znaleziono jeszcze zadniej pary to ustawiamy na max
-    long long bestDist = best.exists ? best.dist : LONG_LONG_MAX;
+    long long bestDist = globalBest.exists ? globalBest.dist : LONG_LONG_MAX;
 
     for (int i = l; i < r; ++i) {
         long long x = pts[i].x - midX;
         long long x2 = x * x;
 
-        if (!best.exists || x2 < bestDist) {
+        if (x2 < bestDist) {
             strip.push_back(pts[i]);
         }
     }
@@ -114,30 +112,60 @@ Result solveRange(vector<Boar> &pts, vector<Boar> &buffer, vector<Boar> &strip, 
             long long y = strip[j].y - strip[i].y;
             long long y2 = y * y;
 
-            // jeśli różnica Y jest większa niż najlepsza znaleziona odległość, przerywamy
-            if (best.exists && y2 >= bestDist) {
+            if (y2 >= bestDist) {
                 break;
             }
 
-            considerPair(strip[i], strip[j], best);
-            bestDist = best.exists ? best.dist : bestDist;
+            considerPair(strip[i], strip[j], globalBest);
+            if (globalBest.exists && globalBest.dist < bestDist) {
+                bestDist = globalBest.dist;
+            }
         }
     }
 
-    return best;
+    return globalBest;
 }
 
-Result findClosestPair(const vector<Boar> &herd) {
+Result findClosestPair(const vector<Boar> &herd, vector<Boar> &buffer, vector<Boar> &strip) {
     vector<Boar> tmp = herd;
-    vector<Boar> buffer;
-    vector<Boar> strip;
+    std::sort(tmp.begin(), tmp.end(), compareX); // sortowanie po X
 
-    std::sort(tmp.begin(), tmp.end(), compareX);
-    buffer.resize(tmp.size());
-    strip.clear();
+    Result best;
+    // sprawdzamy sąsiednie punkty po posortowaniu po X
+    for (long i = 0; i < tmp.size() - 1; ++i) {
+        considerPair(tmp[i], tmp[i+1], best);
+    }
+
+    // Jesli nie znaleziono pary to bierzemy pierwszego samca i pierwszą samicę
+    if (!best.exists) {
+        const Boar* male = nullptr;
+        const Boar* female = nullptr;
+        for (const Boar& b : tmp) {
+            if (b.male && !male) {
+                male = &b;
+            }
+
+            if (!b.male && !female) {
+                female = &b;
+            }
+
+            if (male && female) break;
+        }
+        if (male && female) {
+            considerPair(*male, *female, best);
+        }
+    }
+
+    /*
+     * TODO:
+     *  Jeśli nadal nic nie znaleziono to i tak później nic nie znajdziemy więc robić returna?
+     */
+
+    // Upewniamy się że bufory są wystarczająco duże
+    if (buffer.size() < tmp.size()) buffer.resize(tmp.size());
     strip.reserve(tmp.size());
 
-    return solveRange(tmp, buffer, strip, 0, (int) tmp.size());
+    return solveRange(tmp, buffer, strip, 0, (int) tmp.size(), best);
 }
 
 void printAnswer(const Result &ans) {
@@ -156,6 +184,11 @@ int main() {
     int s;
     std::cin >> s; // liczba stad dzikow
 
+    vector<Boar> buffer;
+    vector<Boar> strip;
+    buffer.reserve(1000000);
+    strip.reserve(1000000);
+
     for (int i = 0; i < s; ++i) {
         int n;
         std::cin >> n; // liczba dzikow w stadzie
@@ -170,7 +203,7 @@ int main() {
             dziki[j] = {x, y, j, isMale};
         }
 
-        printAnswer(findClosestPair(dziki));
+        printAnswer(findClosestPair(dziki, buffer, strip));
 
         int m;
         std::cin >> m;
@@ -180,7 +213,7 @@ int main() {
             std::cin >> id >> x >> y;
             dziki[id].x += x;
             dziki[id].y += y;
-            printAnswer(findClosestPair(dziki));
+            printAnswer(findClosestPair(dziki, buffer, strip));
         }
     }
 

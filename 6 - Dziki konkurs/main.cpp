@@ -1,0 +1,225 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <limits.h>
+
+using std::vector;
+
+struct Boar {
+    long long x;
+    long long y;
+    int id;
+    bool male; // 0 = samica
+};
+
+struct Result {
+    bool exists = false;
+    long long dist = 0;
+    int femaleId = -1;
+    int maleId = -1;
+};
+
+bool compareX(const Boar &left, const Boar &right);
+bool compareY(const Boar &left, const Boar &right);
+
+void considerPair(const Boar &a, const Boar &b, Result &best) {
+    // pomijamy jeśli są tej samej płci
+    if (a.male == b.male) {
+        return;
+    }
+
+    const Boar *female = a.male ? &b : &a;
+    const Boar *male = a.male ? &a : &b;
+
+    // obliczanie odległości
+    long long x = a.x - b.x;
+    long long y = a.y - b.y;
+    long long dist = x * x + y * y;
+
+    if (!best.exists || dist < best.dist) {
+        best.exists = true;
+        best.dist = dist;
+        best.femaleId = female->id;
+        best.maleId = male->id;
+    } else if (dist == best.dist) {
+        if (female->id < best.femaleId || (female->id == best.femaleId && male->id < best.maleId)) {
+            best.femaleId = female->id;
+            best.maleId = male->id;
+        }
+    }
+}
+
+Result solveRange(vector<Boar> &pts, vector<Boar> &buffer, vector<Boar> &strip, int l, int r, Result &globalBest) {
+    int len = r - l;
+
+    // jeśli jest 3 lub mniej punktów sprawdzamy wszystkie pary
+    if (len <= 3) {
+        for (int i = l; i < r; ++i) {
+            for (int j = i + 1; j < r; ++j) {
+                considerPair(pts[i], pts[j], globalBest);
+            }
+        }
+        std::sort(pts.begin() + l, pts.begin() + r, compareY); // sortowanie po Y
+        return globalBest;
+    }
+
+    // dzielimy na pół i wybieramy środkowy punkt
+    int mid = (l + r) / 2;
+    long long midX = pts[mid].x;
+
+    // rozwiązujemy rekurencyjnie lewą i prawą połowę
+    solveRange(pts, buffer, strip, l, mid, globalBest);
+    solveRange(pts, buffer, strip, mid, r, globalBest);
+
+    // scalanie punktów według Y
+    std::merge(pts.begin() + l, pts.begin() + mid, pts.begin() + mid, pts.begin() + r, buffer.begin() + l, compareY);
+    std::copy(buffer.begin() + l, buffer.begin() + r, pts.begin() + l);
+
+    strip.clear();
+
+    // Wyznaczanie najmniejszej odległości
+    // Używamy globalBest.dist jako limitu
+    // Jeśli nie znaleziono jeszcze zadniej pary to ustawiamy na max
+    long long bestDist = globalBest.exists ? globalBest.dist : LONG_LONG_MAX;
+
+    for (int i = l; i < r; ++i) {
+        long long x = pts[i].x - midX;
+        long long x2 = x * x;
+
+        if (x2 < bestDist) {
+            strip.push_back(pts[i]);
+        }
+    }
+
+    for (long i = 0; i < strip.size(); ++i) {
+        for (long j = i + 1; j < strip.size(); ++j) {
+            long long y = strip[j].y - strip[i].y;
+            long long y2 = y * y;
+
+            if (y2 >= bestDist) {
+                break;
+            }
+
+            considerPair(strip[i], strip[j], globalBest);
+            if (globalBest.exists && globalBest.dist < bestDist) {
+                bestDist = globalBest.dist;
+            }
+        }
+    }
+
+    return globalBest;
+}
+
+Result findClosestPair(const vector<Boar> &herd, vector<Boar> &buffer, vector<Boar> &strip) {
+    vector<Boar> tmp = herd;
+    std::sort(tmp.begin(), tmp.end(), compareX); // sortowanie po X
+
+    Result best;
+    // sprawdzamy sąsiednie punkty po posortowaniu po X
+    for (long i = 0; i < tmp.size() - 1; ++i) {
+        considerPair(tmp[i], tmp[i+1], best);
+    }
+
+    // Jesli nie znaleziono pary to bierzemy pierwszego samca i pierwszą samicę
+    if (!best.exists) {
+        const Boar* male = nullptr;
+        const Boar* female = nullptr;
+        for (const Boar& b : tmp) {
+            if (b.male && !male) {
+                male = &b;
+            }
+
+            if (!b.male && !female) {
+                female = &b;
+            }
+
+            if (male && female) break;
+        }
+        if (male && female) {
+            considerPair(*male, *female, best);
+        }
+    }
+
+    // Jeśli nadal nie ma pary to po prostu zwracamy bo to oznacza że i tak nic nie znajdziemy
+    if (!best.exists) {
+        return best;
+    }
+
+    // Dostosowanie wielkości vecrtorow
+    if (buffer.size() < tmp.size()) {
+        buffer.resize(tmp.size());
+    }
+    strip.reserve(tmp.size());
+
+    return solveRange(tmp, buffer, strip, 0, (int) tmp.size(), best);
+}
+
+void printAnswer(const Result &ans) {
+    if (!ans.exists) {
+        std::cout << "0\n";
+        return;
+    }
+    std::cout << ans.femaleId << ' ' << ans.maleId << '\n';
+}
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cout.tie(nullptr);
+    std::cin.tie(nullptr);
+
+    int s;
+    std::cin >> s; // liczba stad dzikow
+
+    vector<Boar> buffer;
+    vector<Boar> strip;
+
+    for (int i = 0; i < s; ++i) {
+        int n;
+        std::cin >> n; // liczba dzikow w stadzie
+
+        vector<Boar> dziki(n);
+        for (int j = 0; j < n; ++j) {
+            long long x, y;
+            int isMaleInput;
+            std::cin >> x >> y >> isMaleInput;
+
+            bool isMale = (isMaleInput == 1);
+            dziki[j] = {x, y, j, isMale};
+        }
+
+        printAnswer(findClosestPair(dziki, buffer, strip));
+
+        int m;
+        std::cin >> m;
+        for (int call = 0; call < m; ++call) {
+            int id;
+            long long x, y;
+            std::cin >> id >> x >> y;
+            dziki[id].x += x;
+            dziki[id].y += y;
+            printAnswer(findClosestPair(dziki, buffer, strip));
+        }
+    }
+
+    return 0;
+}
+
+bool compareX(const Boar &left, const Boar &right) {
+    if (left.x != right.x) {
+        return left.x < right.x;
+    }
+    if (left.y != right.y) {
+        return left.y < right.y;
+    }
+    return left.id < right.id;
+}
+
+bool compareY(const Boar &left, const Boar &right) {
+    if (left.y != right.y) {
+        return left.y < right.y;
+    }
+    if (left.x != right.x) {
+        return left.x < right.x;
+    }
+    return left.id < right.id;
+}

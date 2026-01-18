@@ -61,8 +61,8 @@ long long calcResult(const string& s, vector<long long>& dp) {
 
     // Krok o 1 cyfre
     int num = s[0] - '0';
-    long long w1 = (n == 1) ? waysAny[num] : waysBoth[num];
-    result = (result + w1 * dp[1]) % MOD;
+    long long way = (n == 1) ? waysAny[num] : waysBoth[num];
+    result = (result + way * dp[1]) % MOD;
 
     // Krok o 2 cyfry
     if (n >= 2 && s[0] != '0') {
@@ -77,15 +77,15 @@ long long calcResult(const string& s, vector<long long>& dp) {
         long long currentWays = 0;
 
         // Krok o 1 cyfre
-        int val1 = s[i] - '0';
-        long long w2 = (i == n - 1) ? waysAny[val1] : waysSecond[val1];
-        currentWays = currentWays + w2 * dp[i + 1];
+        num = s[i] - '0';
+        way = (i == n - 1) ? waysAny[num] : waysSecond[num];
+        currentWays = currentWays + way * dp[i + 1];
         currentWays %= MOD;
 
         // Krok o 2 cyfry
         if (i + 1 < n && s[i] != '0') {
-            int val2 = (s[i] - '0') * 10 + (s[i + 1] - '0');
-            currentWays = currentWays + waysAny[val2] * dp[i + 2];
+            num = (s[i] - '0') * 10 + (s[i + 1] - '0');
+            currentWays = currentWays + waysAny[num] * dp[i + 2];
             currentWays %= MOD;
         }
 

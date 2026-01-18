@@ -31,43 +31,45 @@ long long calcPairs(int result) {
     return waysAny[result];
 }
 
-vector<long long> buildDp(const string& s) {
+vector<int> buildDp(const string& s) {
     int n = s.length();
-    vector<long long> dp(n + 1);
+    vector<int> dp(n + 1);
     dp[n] = 1;
 
     // Petla od konca
     for (int i = n - 1; i >= 0; i--) {
         int num = s[i] - '0'; // Zamiana znaku na liczbe
-        long long possib = calcPairs(num) * dp[i + 1];
-        dp[i] = dp[i] + possib;
-        dp[i] %= MOD;
+
+        long long possib = calcPairs(num) * (long long) dp[i + 1];
+        long long currentVal = dp[i] + possib;
+        dp[i] = currentVal % MOD;
 
         // Bierzemy dwie cyfry jeśli się da
         if (i + 1 < n && s[i] != '0') {
             num = (s[i] - '0') * 10 + (s[i + 1] - '0');
-            possib = calcPairs(num) * dp[i + 2];
-            dp[i] = dp[i] + possib;
-            dp[i] %= MOD;
+            possib = calcPairs(num) * (long long) dp[i + 2];
+
+            currentVal = dp[i] + possib;
+            dp[i] = currentVal % MOD;
         }
     }
 
     return dp;
 }
 
-long long calcResult(const string& s, vector<long long>& dp) {
+long long calcResult(const string& s, vector<int>& dp) {
     int n = s.length();
     long long result = 0;
 
     // Krok o 1 cyfre
     int num = s[0] - '0';
     long long way = (n == 1) ? waysAny[num] : waysBoth[num];
-    result = (result + way * dp[1]) % MOD;
+    result = (result + way * (long long) dp[1]) % MOD;
 
     // Krok o 2 cyfry
     if (n >= 2 && s[0] != '0') {
         num = (s[0] - '0') * 10 + (s[1] - '0');
-        result = result + waysAny[num] * dp[2];
+        result = result + waysAny[num] * (long long) dp[2];
         result %= MOD;
     }
 
@@ -79,13 +81,13 @@ long long calcResult(const string& s, vector<long long>& dp) {
         // Krok o 1 cyfre
         num = s[i] - '0';
         way = (i == n - 1) ? waysAny[num] : waysSecond[num];
-        currentWays = currentWays + way * dp[i + 1];
+        currentWays = currentWays + way * (long long) dp[i + 1];
         currentWays %= MOD;
 
         // Krok o 2 cyfry
         if (i + 1 < n && s[i] != '0') {
             num = (s[i] - '0') * 10 + (s[i + 1] - '0');
-            currentWays = currentWays + waysAny[num] * dp[i + 2];
+            currentWays = currentWays + waysAny[num] * (long long) dp[i + 2];
             currentWays %= MOD;
         }
 
@@ -105,7 +107,7 @@ int main() {
     cin >> s;
 
     initCountsCache();
-    vector<long long> dp = buildDp(s);
+    vector<int> dp = buildDp(s);
     long long result = calcResult(s, dp);
 
     cout << result << endl;

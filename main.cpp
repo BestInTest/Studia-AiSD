@@ -6,6 +6,7 @@ using namespace std;
 
 void initTables();
 int getAnimalIndex(string& name, int& n);
+bool isConflict(int animalId, int slot);
 
 struct Animal {
     string name;
@@ -19,8 +20,9 @@ struct Animal {
 };
 
 vector<Animal> zoo;
-bool conflicts[20][20];
-int schedule[25][3]; // [slot][scena index], wartość to id zwierzęcia lub -1
+int conflictMasks[20];
+int slotMasks[25]; // Maska zwierząt obecnych w danym slocie
+int schedule[25][3]; // [slot][scena index], wartość to id zwierzęcia lub -1 (jeśli wolne)
 
 
 bool solve(int animalId, int& n) {
@@ -34,46 +36,39 @@ bool solve(int animalId, int& n) {
     // Sprawdzanie wszystkich możliwych slotow
     for (int slot = current.minSlot; slot <= current.maxSlot; slot++) {
 
+        if (isConflict(animalId, slot)) {
+            continue; // konflikt
+        }
+
         // Sprawdzanie scen
         string sceneStr = "ABC";
         for (int scene = 0; scene < 3; scene++) {
             char sceneChar = sceneStr[scene];
 
             // Sprawdzamy czy zwierze może wystąpić na tej scenie
-            if (current.allowedStages.find(sceneChar) == string::npos) { //todo: może zmienić?
+            if (current.allowedStages.find(sceneChar) == string::npos) {
                 continue;
             }
 
-            // Sprawdzamy czy miejsce jest wolne
+            // Sprawdzamy czy miejsce (scena w tym slocie) jest wolne
             if (schedule[slot][scene] != -1) {
-                continue; // Zajete przez kogoś innego
+                continue; // Zajete
             }
 
-            // Sprawdzanie czy jest konflikt z innymi zwierzętami
-            bool conflictFound = false;
-            for (int prev = 0; prev < animalId; prev++) {
-                if (conflicts[animalId][prev] && zoo[prev].assignedSlot == slot) {
-                    conflictFound = true;
-                    break;
-                }
-            }
-
-            if (conflictFound) {
-                continue;
-            }
-
-            // Nie ma konfliktu więc znaleziono miejsce
+            // Nie ma konfliktu ani zajętej sceny więc znaleziono miejsce
             schedule[slot][scene] = animalId;
+            slotMasks[slot] |= (1 << animalId);
             current.assignedSlot = slot;
             current.assignedStage = sceneChar;
 
-            // Rekurencja dla następnego zwierzecia
+            // Rekurencja do następnego zwierzecia
             if (solve(animalId + 1, n)) {
                 return true;
             }
 
-            // Cofamy wybór jeśli droga nie prowadzi do rozwiązania
+            // Cofanie wyboru jeśli solve zwróci false
             schedule[slot][scene] = -1;
+            slotMasks[slot] &= ~(1 << animalId); // and z negacją bitu aby usunąć zwierzę z maski
             current.assignedSlot = 0;
             current.assignedStage = ' ';
         }
@@ -111,10 +106,13 @@ int main() {
         int id1 = getAnimalIndex(name1, n);
         int id2 = getAnimalIndex(name2, n);
 
-        // Zapisujemy konflikt w obie strony
         if (id1 != -1 && id2 != -1) {
-            conflicts[id1][id2] = true;
-            conflicts[id2][id1] = true;
+            /*
+             Ustawianie bitów konfliktów dla obu zwierząt
+             Poprzez przesuniecie 1 o id pozycji w lewo (1 << id)
+            */
+            conflictMasks[id1] |= (1 << id2);
+            conflictMasks[id2] |= (1 << id1);
         }
     }
 
@@ -131,11 +129,14 @@ int main() {
 }
 
 void initTables() {
-    // Pusta tablica konfliktów
+    // Puste maski konfliktów
     for (int i = 0; i < 20; i++) {
-        for (int j = 0; j < 20; j++) {
-            conflicts[i][j] = false;
-        }
+        conflictMasks[i] = 0;
+    }
+
+    // Puste maski slotów
+    for (int i = 0; i < 25; i++) {
+        slotMasks[i] = 0;
     }
 
     //Puste harmonogramy
@@ -153,4 +154,9 @@ int getAnimalIndex(string& name, int& n) {
         }
     }
     return -1;
+}
+
+bool isConflict(int animalId, int slot) {
+    // Sprawdzamy czy w masce slotu są jakieś bity konfliktów dla danego zwierzęcia
+    return (slotMasks[slot] & conflictMasks[animalId]) != 0;
 }

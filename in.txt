@@ -1,1 +1,13 @@
-
+6 6 3
+Zubr 1 3 AB
+Bober 1 3 AB
+Los 1 3 AB
+Lis 1 1 A
+Wilk 2 2 A
+Dzik 3 3 A
+Zubr ! Bober
+Bober ! Los
+Los ! Zubr
+Zubr ! Wilk
+Bober ! Dzik
+Los ! Lis

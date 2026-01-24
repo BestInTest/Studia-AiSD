@@ -6,6 +6,7 @@ using namespace std;
 
 void initTables();
 int getAnimalIndex(string& name, int& n);
+bool isAllowedOnThisStage(char stageChar, string& allowedStages);
 bool isConflict(int animalId, int slot);
 
 struct Animal {
@@ -25,7 +26,7 @@ int slotMasks[25]; // Maska zwierząt obecnych w danym slocie
 int schedule[25][3]; // [slot][scena index], wartość to id zwierzęcia lub -1 (jeśli wolne)
 
 
-bool solve(int animalId, int& n) {
+bool startBacktrack(int animalId, int& n) {
     if (animalId == n) {
         // udało się przypisać miejsca wszystkim zwierzętom
         return true;
@@ -45,9 +46,9 @@ bool solve(int animalId, int& n) {
         for (int scene = 0; scene < 3; scene++) {
             char sceneChar = sceneStr[scene];
 
-            // Sprawdzamy czy zwierze może wystąpić na tej scenie
-            if (current.allowedStages.find(sceneChar) == string::npos) {
-                continue;
+            // Sprawdzamy czy zwierze może wystąpić na danej scenie
+            if (!isAllowedOnThisStage(sceneChar, current.allowedStages)) {
+                continue; // Nie może
             }
 
             // Sprawdzamy czy miejsce (scena w tym slocie) jest wolne
@@ -62,7 +63,7 @@ bool solve(int animalId, int& n) {
             current.assignedStage = sceneChar;
 
             // Rekurencja do następnego zwierzecia
-            if (solve(animalId + 1, n)) {
+            if (startBacktrack(animalId + 1, n)) {
                 return true;
             }
 
@@ -116,8 +117,7 @@ int main() {
         }
     }
 
-    if (solve(0, n)) {
-        // Wypisujemy wynik w kolejności wejścia
+    if (startBacktrack(0, n)) {
         for (int i = 0; i < n; i++) {
             cout << zoo[i].name << " " << zoo[i].assignedSlot << " " << zoo[i].assignedStage << "\n";
         }
@@ -156,7 +156,16 @@ int getAnimalIndex(string& name, int& n) {
     return -1;
 }
 
+bool isAllowedOnThisStage(char stageChar, string& allowedStages) {
+    for (int i = 0; i < allowedStages.length(); i++) {
+        if (allowedStages[i] == stageChar) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool isConflict(int animalId, int slot) {
-    // Sprawdzamy czy w masce slotu są jakieś bity konfliktów dla danego zwierzęcia
+    // Sprawdzamy czy maska slotu ma jakieś bity konfliktu dla danego zwierzęcia
     return (slotMasks[slot] & conflictMasks[animalId]) != 0;
 }
